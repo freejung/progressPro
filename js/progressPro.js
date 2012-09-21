@@ -53,6 +53,7 @@
 //		var theseFields = {0: 'C_EmailAddress', 1: 'C_FirstName', 2: 'C_LastName', 3: 'C_How_did_you_hear_about_us_1', 
 //						4: 'C_BusPhone', 5: 'C_Title', 6: 'C_Company', 7: 'C_State_Prov', 8: 'C_Product_Family1', 
 //						9: 'C_Number_of_Employees1', 10: 'C_HR_When1', 11: 'C_EHS_when1', 13: 'C_Channel_History11'}; 
+//		var nfields = 15;
 //		var openQuestions = 3;
 //		var fixedQuestions = 3;
 //		var thisForm = $('form').attr('id');
@@ -70,7 +71,7 @@
 //		prePop(theseFields, elqDLKey_Cookie, elqDLKey_Email, function(){
 //			addChannel();
 //			progressiveProfile(openQuestions, fixedQuestions, thisForm, theseFields, elqDLKey_Cookie, 
-//										elqDLKey_Email, myValidationRules, mySkipRules);
+//										elqDLKey_Email, myValidationRules, mySkipRules, nfields);
 //		});
 //	});
 //	</script>
@@ -124,7 +125,7 @@ function popByEmail(myEmail, poparray, elqDLKey_Email, callback) {
 			for (i in poparray){
 				fieldval = GetElqContentPersonalizationValue(poparray[i]);
 				if(fieldval != '') n++;
-				$('#field' + i).val(fieldval);
+				$('[name="'+poparray[i]+'"]').val(fieldval);
 			}
 			if(typeof callback == 'function'){
         		callback();
@@ -178,11 +179,11 @@ function prePop(poparray, elqDLKey_Cookie, elqDLKey_Email, emailField, callback)
 	var n=0;
 	var elqPPS = '50';
 //if the email field is prefilled, use that value for the email address
-	var myEmail = $('#field'+emailField).val();
+	var myEmail = $('[name="C_EmailAddress"]').val();
 //set up default personalization function (only populates email)
 	GetElqContentPersonalizationValue = function(fieldName){
 		if (fieldName == 'C_EmailAddress'){
-			myEmail = $('#field'+emailField).val();
+			myEmail = $('[name="C_EmailAddress"]').val();
 			return myEmail;
 		}else{
 			return'';
@@ -215,10 +216,10 @@ function prePop(poparray, elqDLKey_Cookie, elqDLKey_Email, emailField, callback)
 function skipCondition(skipOption){
 // evaluate whether the hide or show condition is true for an advanced skip rule
 
-	var did = '#field' + skipOption.depends;
+	var did = '[name="' + skipOption.depends + '"]';
 	
   if($(did).attr('type') == 'radio') {		
-  var radioname = $(did).attr('name');
+  var radioname = skipOption.depends;
 	switch(skipOption.operator){
 //evaluate the condition according to the specified operator
 	case 'eq':
@@ -299,17 +300,17 @@ function skipCondition(skipOption){
   }
 }
 
-function skipField(i){
+function skipField(fieldname){
 //hide field number i and remove its validation rules
-	$('#formElement' + i).hide();
-	$('#field' + i).rules('remove');
+	$('[name="'+fieldname+'"]:parent').hide();
+	$('[name="'+fieldname+'"]').rules('remove');
 }
 
-function skipIfNotShown(skipOptions, i){
+function skipIfNotShown(skipOptions, fieldname){
 //hide the field unless any "show" condition exists and is true
 	var showThis = 0;
 	for (x in skipOptions){
-		if (x == i){
+		if (x == fieldname){
 			var ruleset = skipOptions[x];
 			for (y in ruleset){
 				if(ruleset[y].action == 'show'){
@@ -321,17 +322,17 @@ function skipIfNotShown(skipOptions, i){
 	if(showThis){
 		return 0;
 	}else{
-		skipField(i);
+		skipField(fieldname);
 		return 1;
 	}
 }
 
-function skipIfHidden(skipOptions, i){
+function skipIfHidden(skipOptions, fieldname){
 //hide this field if it has a "hide" rule, unless there is
 //a "show" rule (show rules take priority)
 	var hideThis = 0;	
 	for (x in skipOptions){
-		if (x == i){
+		if (x == fieldname){
 			var ruleset = skipOptions[x];
 			for (y in ruleset){
 				if(ruleset[y].action == 'hide'){
@@ -341,53 +342,53 @@ function skipIfHidden(skipOptions, i){
 		}
 	}
 	if(hideThis){
-		skipIfNotShown(skipOptions, i);
+		skipIfNotShown(skipOptions, fieldname);
 		return 1;
 	}else{
 		return 0;
 	}
 }
 
-function proProgress(formId, nfields, sd, ad, skipOptions) {
+function proProgress(formId, nfields, sd, ad, skipOptions, formFields) {
 	var n=0;
 	//first make sure all fields are shown, then hide them.
  			for(i=0;i<nfields-1;i++){
- 				 $('#formElement' + i).show();
+ 				 $('[name="'+formFields[i]+'"]:parent').show();
  			}
 //leave ad questions at the top even if answered and count unanswered questions
 	for(i=0;i<ad;i++){
-		if($('#field' + i).val()=='')n++;
+		if($('[name="'+formFields[i]+'"]').val()=='')n++;
 	}
 	for(i=ad;i<nfields-1;i++){
 //for the remaining fields, if the field is prefilled, skip unless "show" condition is true
-		if($('#field' + i).val()!=''){
-			if(!skipIfNotShown(skipOptions, i)) n++;
+		if($('[name="'+formFields[i]+'"]').val()!=''){
+			if(!skipIfNotShown(skipOptions, formFields[i])) n++;
 		}else{
 //for up to sd empty fields, only skip the field if a "hide" condition is true
 			if (n < sd){
 				var thisOption = 0;
 				for (x in skipOptions) {
-					if (x == i) {
+					if (x == formFields[i]) {
 						thisOption = 1;
 					}
 				}
 				if(thisOption){
-					if(!skipIfHidden(skipOptions, i)){
+					if(!skipIfHidden(skipOptions, formFields[i])){
 						n++;
 //if this field is changed (the question is answered), show it on subsequent iterations.
 //if an answered field disappears, it is confusing to the visitor, and will make them answer more questions.
-						$('#field'+i).change(function(){
-							var thisfieldnum = $(this).attr('id').replace('field','');
-							skipOptions[thisfieldnum] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
+						$('[name="'+formFields[i]+'"]').change(function(){
+							var thisfieldname = $(this).attr('name');
+							skipOptions[thisfieldname] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
 						});
 					}
 				}else{
 //since this field does not have a skip option, set it to always show on subsequent iterations
 					n++; 
-					skipOptions[i] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
+					skipOptions[formFields[i]] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
 				}
 			}else{
-				if(!skipIfNotShown(skipOptions, i)) n++;
+				if(!skipIfNotShown(skipOptions, formFields[i])) n++;
 			}
 		}
 	}
@@ -400,7 +401,7 @@ function proProgress(formId, nfields, sd, ad, skipOptions) {
 	return skipOptions;
 }
 
-function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKey_Email, emailField, validationOptions, skipOptions) {
+function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKey_Email, emailField, validationOptions, skipOptions, nfields) {
 //user-called function
 //arguments:
 //		sd: total number of unanswered questions to ask
@@ -408,39 +409,31 @@ function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKe
 //		formId: the id of the progressive profiling form
 //		formFields: an array of Eloqua database field names, indexed in the order they appear on the form
 //		validationOptions: array containing options for jquery validation plugin, see http://docs.jquery.com/Plugins/Validation/
-//		skipOptions: optional array of advanced skip/show rules -- for each field (indexed by an integer 0 to nfields-1), specify these options:
+//		skipOptions: optional array of advanced skip/show rules -- for each field (indexed by the field names), specify these options:
 //			action: "hide" or "show" the field if condition is true
-//			depends: index of the field the value of which this rule depends on
+//			depends: name of the field the value of which this rule depends on
 //			operator: "eq" for equal to, "neq" for not equal to, "contains" or "always" (perform the action in all cases)
 //			condition: value of "depends" field to conditionally evaluate
 //				in other words, perform "action" on this field if the field "depends" (equals, does not equal, or contains) the value "condition"
-//				example: {10:{action:'hide',depends:8,operator:'neq',condition:'HR'},11:{action:'hide',depends:8,operator'eq',condition:'HR'}}
-//					meaning hide field 10 if field 8 is not "HR", and hide field 11 if field 8 is "HR" 
+//				example: {'C_AnyField':{action:'hide',depends:'C_MyField',operator:'neq',condition:'HR'},'C_AnotherField':{action:'hide',depends:'C_MyField',operator'eq',condition:'HR'}}
+//					meaning hide field C_AnyField if field C_MyField is not "HR", and hide field C_AnotherField if field 'C_MyField' is "HR" 
+//		nfields is the number of fields in the form, including the submit button
 	var oldValOptions = new Array();
 //deep copy validation options so they can be reset if necessary
 	$.extend(true, oldValOptions, validationOptions);
 //validate the form using jquery.validate according to validationOptions
 	$('#' + formId).validate(validationOptions);
-//count the number of fields in the form (including submit button)
-	var nfields=0;
-	var id='formElement0';
-	for(i=0;i<100;i++){
-		id = 'formElement' + i;
-		if(document.getElementById(id)!=null){
-			nfields++;
-		}
-	}
 //call proProgress to skip fields as specified and set new skip options so that the same fields are shown on subsequent iterations
-	skipOptions = proProgress(formId, nfields, sd, ad, skipOptions);	
+	skipOptions = proProgress(formId, nfields, sd, ad, skipOptions,formFields);	
 //if the email changes, re-process the form
-	$('#field'+emailField).change(function() {
+	$('[name="'+emailField+'"]').change(function() {
 //reset the validation options -- some rules may have been removed on previously skipped fields
 		$.extend(true, validationOptions, oldValOptions);
 			for (i in formFields) {
-				var fieldName = $('#field' + i).attr('name');
+				var fieldName = formFields[i];
 				for (field in validationOptions.rules){
 					if (field == fieldName){ 
-						$('#field' + i).rules('add', validationOptions['rules'][fieldName]);
+						$('[name="'+formFields[i]+'"]').rules('add', validationOptions['rules'][fieldName]);
 					}
 				}
 			}
@@ -448,7 +441,7 @@ function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKe
 		prePop(formFields, elqDLKey_Cookie, elqDLKey_Email, emailField, function(){
 //re-process the form, updating the skipOptions again
 			addChannel();
-			skipOptions = proProgress(formId, nfields, sd-1, ad, skipOptions);
+			skipOptions = proProgress(formId, nfields, sd-1, ad, skipOptions, formFields);
 		});		
 	});	
 //if one of the "depends" fields in skipOptions changes, we need to re-process the form according to the new value of the field
@@ -468,17 +461,16 @@ function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKe
 //for each unique "depends" field, re-process the form if the field is changed
 	for (i in uniqueDependFields){
 		d = uniqueDependFields[i];
-		var dfid = 'field' + d;
-	  if ($('#' + dfid).attr('type') == 'radio') {
+	  if ($('[name="'+d+'"]').attr('type') == 'radio') {
 
-		$('input[id="field'+d+'"]').change(function() {
+		$('input[name="'+d+'"]').change(function() {
 //reset the validation options -- some rules may have been removed on previously skipped fields
 			$.extend(true, validationOptions, oldValOptions);
 			for (i in formFields) {
-				var fieldName = $('#field' + i).attr('name');
+				var fieldName = formFields[i];
 				for (field in validationOptions.rules){
 					if (field == fieldName){ 
-						$('#field' + i).rules('add', validationOptions['rules'][fieldName]);
+						$('[name="'+formFields[i]+'"]').rules('add', validationOptions['rules'][fieldName]);
 					}
 				}
 			}
@@ -486,24 +478,23 @@ function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKe
 			
 //continue to show the "depends" field even if other rules might hide it -- hiding it now would confuse the visitor
 //determine which field just changed:
-			var chNum = $(this).attr('id');
-			chNum = chNum.replace('field','');
+			var chNum = $(this).attr('name');
  			skipOptions[chNum] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
 //re-process the form, updating the skipOptions again
-			skipOptions = proProgress(formId, nfields, sd, ad, skipOptions);		
+			skipOptions = proProgress(formId, nfields, sd, ad, skipOptions, formFields);		
 		});			
 			
 			
 	  }else{
 		
-		$('#' + dfid).change(function() {
+		$('input[name="'+d+'"]').change(function() {
 //reset the validation options -- some rules may have been removed on previously skipped fields
 			$.extend(true, validationOptions, oldValOptions);
 			for (i in formFields) {
-				var fieldName = $('#field' + i).attr('name');
+				var fieldName = formFields[i];
 				for (field in validationOptions.rules){
 					if (field == fieldName){ 
-						$('#field' + i).rules('add', validationOptions['rules'][fieldName]);
+						$('[name="'+formFields[i]+'"]').rules('add', validationOptions['rules'][fieldName]);
 					}
 				}
 			}
@@ -511,11 +502,10 @@ function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKe
 			
 //continue to show the "depends" field even if other rules might hide it -- hiding it now would confuse the visitor
 //determine which field just changed:
-			var chNum = $(this).attr('id');
-			chNum = chNum.replace('field','');
+			var chNum = $(this).attr('name');
  			skipOptions[chNum] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
 //re-process the form, updating the skipOptions again
-			skipOptions = proProgress(formId, nfields, sd, ad, skipOptions);		
+			skipOptions = proProgress(formId, nfields, sd, ad, skipOptions, formFields);		
 		});
 	  }
 	
