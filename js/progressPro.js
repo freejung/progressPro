@@ -168,7 +168,7 @@ function popByEmail(myEmail, poparray, elqDLKey_Email, callback) {
     });
 })(jQuery);
 
-function prePop(poparray, elqDLKey_Cookie, elqDLKey_Email, callback) {
+function prePop(poparray, elqDLKey_Cookie, elqDLKey_Email, emailField, callback) {
 //user should call this function. poparray is an array of field ID numbers and corresponding Eloqua database field names
 //prepopulate field values from a user-specified array of Eloqua field names
 //first change default enter submit action to tab for all but the submit button to prevent overwriting data accidentally by pressing enter
@@ -178,11 +178,11 @@ function prePop(poparray, elqDLKey_Cookie, elqDLKey_Email, callback) {
 	var n=0;
 	var elqPPS = '50';
 //if the email field is prefilled, use that value for the email address
-	var myEmail = $('#field0').val();
+	var myEmail = $('#field'+emailField).val();
 //set up default personalization function (only populates email)
 	GetElqContentPersonalizationValue = function(fieldName){
 		if (fieldName == 'C_EmailAddress'){
-			myEmail = $('#field0').val();
+			myEmail = $('#field'+emailField).val();
 			return myEmail;
 		}else{
 			return'';
@@ -214,11 +214,56 @@ function prePop(poparray, elqDLKey_Cookie, elqDLKey_Email, callback) {
 
 function skipCondition(skipOption){
 // evaluate whether the hide or show condition is true for an advanced skip rule
+
 	var did = '#field' + skipOption.depends;
+	
+  if($(did).attr('type') == 'radio') {		
+  var radioname = $(did).attr('name');
+	switch(skipOption.operator){
+//evaluate the condition according to the specified operator
+	case 'eq':
+		if ($('[name*="'+radioname+'"][type=radio]:checked').val() == skipOption.condition){
+			
+			return 1;
+		}else{
+			return 0;
+		}
+		break;
+	case 'neq':
+		if ($('[name*="'+radioname+'"][type=radio]:checked').val() != skipOption.condition){
+			return 1;
+		}else{
+			return 0;
+		}
+		break;
+	case 'contains':
+		patt = new RegExp(skipOption.condition,'i');
+		if (patt.test($('[name*="'+radioname+'"][type=radio]:checked').val())){
+			return 1;
+		}else{
+			return 0;
+		}
+		break;
+	case 'always':
+		return 1;
+		break;
+	default:
+//if no operator is specified, use the equals operator
+		if ($('[name*="'+radioname+'"][type=radio]:checked').val() == skipOption.condition){
+			return 1;
+		}else{
+			return 0;
+		}
+		break;
+	}	
+	
+  }else{
+  	
 	switch(skipOption.operator){
 //evaluate the condition according to the specified operator
 	case 'eq':
 		if ($(did).val() == skipOption.condition){
+			
 			return 1;
 		}else{
 			return 0;
@@ -251,6 +296,7 @@ function skipCondition(skipOption){
 		}
 		break;
 	}
+  }
 }
 
 function skipField(i){
@@ -354,7 +400,7 @@ function proProgress(formId, nfields, sd, ad, skipOptions) {
 	return skipOptions;
 }
 
-function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKey_Email, validationOptions, skipOptions) {
+function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKey_Email, emailField, validationOptions, skipOptions) {
 //user-called function
 //arguments:
 //		sd: total number of unanswered questions to ask
@@ -387,7 +433,7 @@ function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKe
 //call proProgress to skip fields as specified and set new skip options so that the same fields are shown on subsequent iterations
 	skipOptions = proProgress(formId, nfields, sd, ad, skipOptions);	
 //if the email changes, re-process the form
-	$('#field0').change(function() {
+	$('#field'+emailField).change(function() {
 //reset the validation options -- some rules may have been removed on previously skipped fields
 		$.extend(true, validationOptions, oldValOptions);
 			for (i in formFields) {
@@ -399,7 +445,7 @@ function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKe
 				}
 			}
 // pre-populate the form again
-		prePop(formFields, elqDLKey_Cookie, elqDLKey_Email, function(){
+		prePop(formFields, elqDLKey_Cookie, elqDLKey_Email, emailField, function(){
 //re-process the form, updating the skipOptions again
 			addChannel();
 			skipOptions = proProgress(formId, nfields, sd-1, ad, skipOptions);
@@ -416,13 +462,40 @@ function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKe
 			for(i in uniqueDependFields) {
 				if (uniqueDependFields[i]==d) unique = 0;
 			}
-			if(unique==1 && d != '' && d != 0) uniqueDependFields.push(d);
+			if(unique==1 && d != '' && d != emailField) uniqueDependFields.push(d);
 		}
 	}
 //for each unique "depends" field, re-process the form if the field is changed
 	for (i in uniqueDependFields){
 		d = uniqueDependFields[i];
 		var dfid = 'field' + d;
+	  if ($('#' + dfid).attr('type') == 'radio') {
+
+		$('input[id="field'+d+'"]').change(function() {
+//reset the validation options -- some rules may have been removed on previously skipped fields
+			$.extend(true, validationOptions, oldValOptions);
+			for (i in formFields) {
+				var fieldName = $('#field' + i).attr('name');
+				for (field in validationOptions.rules){
+					if (field == fieldName){ 
+						$('#field' + i).rules('add', validationOptions['rules'][fieldName]);
+					}
+				}
+			}
+			
+			
+//continue to show the "depends" field even if other rules might hide it -- hiding it now would confuse the visitor
+//determine which field just changed:
+			var chNum = $(this).attr('id');
+			chNum = chNum.replace('field','');
+ 			skipOptions[chNum] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
+//re-process the form, updating the skipOptions again
+			skipOptions = proProgress(formId, nfields, sd, ad, skipOptions);		
+		});			
+			
+			
+	  }else{
+		
 		$('#' + dfid).change(function() {
 //reset the validation options -- some rules may have been removed on previously skipped fields
 			$.extend(true, validationOptions, oldValOptions);
@@ -434,6 +507,8 @@ function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKe
 					}
 				}
 			}
+			
+			
 //continue to show the "depends" field even if other rules might hide it -- hiding it now would confuse the visitor
 //determine which field just changed:
 			var chNum = $(this).attr('id');
@@ -442,5 +517,7 @@ function progressiveProfile(sd, ad, formId, formFields, elqDLKey_Cookie, elqDLKe
 //re-process the form, updating the skipOptions again
 			skipOptions = proProgress(formId, nfields, sd, ad, skipOptions);		
 		});
+	  }
+	
 	}
 }
