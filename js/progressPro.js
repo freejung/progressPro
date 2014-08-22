@@ -47,41 +47,41 @@
 //	    var _elqQ = _elqQ || [];
 //	    _elqQ.push(['elqSetSiteId', elqSiteId]);
 //	</script>
-//	<script type="text/javascript" src="http://www.mydomain.com/assets/js/progressPro-general.js"></script>
+//	<script type="text/javascript" src="http://www.mydomain.com/assets/js/progressPro.js"></script>
 //
-//	<script type="text/javascript">
+//<script type="text/javascript">
 //	$(document).ready(function() {	
-//		var elqDLKey_Cookie = escape('myGUIDLookupKey');
-//		var elqDLKey_Email = escape('myEmailLookupKey');
-//		var theseFields = {0: 'C_EmailAddress', 1: 'C_FirstName', 2: 'C_LastName', 3: 'C_How_did_you_hear_about_us_1', 
-//						4: 'C_BusPhone', 5: 'C_Title', 6: 'C_Company', 7: 'C_State_Prov', 8: 'C_Product_Family1', 
-//						9: 'C_Number_of_Employees1', 10: 'C_HR_When1', 11: 'C_EHS_when1', 13: 'C_Channel_History11'}; 
-//		var popFields = theseFields;
-//		var nfields = 15;
-//		var openQuestions = 3;
-//		var fixedQuestions = 3;
-//		var thisForm = $('form').attr('id');
-//		var myValidationRules = { rules: {C_FirstName: {required: true}, C_LastName: {required: true}, 
-//					C_How_did_you_hear_about_us_1: {required: true}, C_Title: {required: true}, C_Company: {required: true}, 
-//					C_State_Prov: {required: true}, C_Product_Family1: {required: true}, 
-//					C_Number_of_Employees1: {required: true}, C_HR_When1: {required: true}, C_EHS_when1: {required: true}, 
-//					C_BusPhone: { required: true, phoneUS: true }, C_EmailAddress: { required: true, email: true } } };
-//		var skipClients = {action: 'hide', depends: 'C_How_did_you_hear_about_us_1', operator: 'eq', condition: 'Client'};
-//		var showAlways = {action: 'show', depends: '', operator: 'always', condition: ''};
-//		var mySkipRules = {'C_HR_When1': {1: {action: 'hide', depends: 8, operator: 'neq', condition: 'HR'}, 2: skipClients}, 
-//					'C_EHS_when1': {1: {action: 'hide', depends: 'C_Product_Family1', operator: 'eq' ,condition: 'HR'}, 2: skipClients}, 
-//					'C_BusPhone': {1: skipClients}, 'C_Title': {1: skipClients}, 'C_Company': {1: skipClients}, 'C_State_Prov': {1: skipClients}, 
-//					'C_Product_Family1': {1: skipClients}, 'C_Number_of_Employees1': {1: skipClients}, 'C_EHS_when1': {1: skipClients}};
-//		prePop(popFields, elqDLKey_Cookie, elqDLKey_Email, function(){
-//			addChannel();
-//			progressiveProfile(openQuestions, fixedQuestions, thisForm, theseFields, popFields, elqDLKey_Cookie, 
-//										elqDLKey_Email, myValidationRules, mySkipRules, nfields);
-//		});
-//	});
-//	</script>
+//
+//		var elqDLKey_Cookie = escape('#####');
+//		var elqDLKey_Email = escape('#####');
+//		var theseFields = ['C_EmailAddress', 'C_FirstName', 'C_LastName', 'C_Company','C_Primary_Interest1', 'C_BusPhone', 'C_Website1', 'C_Lead_Role1', 'C_Function1', 'C_Title', 'C_Company_Type1', 'C_Project_Time_Frame1']; 
+//		var popFields = ['C_FirstName', 'C_LastName', 'C_Company','C_Primary_Interest1', 'C_BusPhone', 'C_Website1', 'C_Lead_Role1', 'C_Function1', 'C_Title', 'C_Company_Type1', 'C_Project_Time_Frame1'];
+//		var openQuestions = 4;
+//		var fixedQuestions = 1;
+//		var thisForm = 'form21';
+//      var channelField = 0;
+//      var emailField = 'C_EmailAddress';
+//        var visitorEmailField = 'V_ElqEmailAddress';
+//  		var myValidationRules = { rules: {C_FirstName: {required: true}, C_LastName: {required: true}, 
+//  					 C_Title: {required: true}, C_Company: {required: true}, C_Website1: {required: true},
+//					 C_Primary_Interest1: {required: true},C_Project_Time_Frame1: {required: true},C_Lead_Role1: {required: true},C_Function1: {required: true},C_Company_Type1: {required: true},
+//  					 C_BusPhone: { required: true, phoneUS: true }, C_EmailAddress: { required: true, email: true } } };
+//  		var showAlways = {action: 'show', depends: '', operator: 'always', condition: ''};
+//		var mySkipRules = {'C_Email_Opt_In1': {1: showAlways}, 'C_Requests_Contact1': {1: showAlways}}
+//  		prePop(thisForm, theseFields, elqDLKey_Cookie, elqDLKey_Email, emailField, visitorEmailField, function(){
+//  			progressiveProfile(openQuestions, fixedQuestions, thisForm, theseFields, popFields, elqDLKey_Cookie, 
+//  										elqDLKey_Email, emailField, channelField, myValidationRules, mySkipRules);
+//  		});
+//
+//  	});
+//</script>
+//
 //
 //*********************************************************************************************
 
+var debugProgressPro = 0;
+var progressProAutoSubmit = 0;
+var progressProValidator = 0;
 
 function getUrlVars()
 {
@@ -96,53 +96,51 @@ function getUrlVars()
     }
     return vars;
 }
-
-function addChannel()
+function addChannel(formId, channelField)
 {
 //function to append the value of the ch parameter (formatted, along with form name) 
 //to a field called "Channel History" - used to track the source channel
 //of a registrant, e.g. http://go.kpaonline.com/LP=26?elqCampaignId=16&ch=topliners
 //records that the visitor came from Topliners
-	var patt1 = /^[-_a-zA-Z0-9]+$/;
+    if(debugProgressPro) console.log('calling addchannel');
+    var patt1 = /^[-_a-zA-Z0-9]+$/;
 	if(getUrlVars()['ch']) var chan = getUrlVars()['ch'].match(patt1);
 	if (chan != null){
-		chan = $('input[name="C_Channel_History11"]').val() + $('form').attr('id') + ' ' + $('form').attr('name') + ' channel: ' + chan + ' || ';
-		$('input[name="C_Channel_History11"]').val(chan);
+		chan = $('#'+formId+' input[name="'+channelField+'"]').val() + formId + ' ' + $('#'+formId).attr('name') + ' channel: ' + chan + ' || ';
+		$('#'+formId+' input[name="'+channelField+'"]').val(chan);
 	}
 }
-
-function popByEmail(myEmail, poparray, elqDLKey_Email, callback) {
+function popByEmail(formId, myEmail, poparray, elqDLKey_Email, callback) {
 //function to populate fields by using an Eloqua data lookup based on email address
 //you must set up a data lookup by email in Eloqua and specify the lookup key
 //first set up data lookup variables for email-based contact lookup 
-    //alert('populating fields by email '+myEmail+' elqSiteId='+elqSiteId);
-    if(typeof callback == 'function' && myEmail == ''){
-		callback();
-		return(0);
+    if(debugProgressPro) console.log('populating fields by email '+myEmail);
+    for (i in poparray){
+		$('#'+formId+' [name="'+poparray[i]+'"]').val('');
 	}
-	var n=0;
+	if(typeof callback == 'function'){
+        if(debugProgressPro) console.log('calling callback function: '+callback);
+		callback();
+  	}
+  	if(myEmail == ''){
+		return;
+	}
 	var elqDLLookup = '<C_EmailAddress>'+myEmail+'</C_EmailAddress>';
 	var fieldval;
-	_elqQ = [];
-    _elqQ.push(['elqSetSiteId', elqSiteId]);
-	_elqQ.push(['elqDataLookup', elqDLKey_Email, elqDLLookup]);
 	SetElqContent = function(){
-		//alert('called SetElqContent');
+		if(debugProgressPro) console.log('called SetElqContent');
 		for (i in poparray){
 			fieldval = GetElqContentPersonalizationValue(poparray[i]);
-			//alert('setting field '+poparray[i]+' to '+fieldval);
-			if(fieldval != '') n++;
-			$('[name="'+poparray[i]+'"]').val(fieldval);
+			if(debugProgressPro) console.log('setting field '+poparray[i]+' to '+fieldval);
+			$('#'+formId+' [name="'+poparray[i]+'"]').val(fieldval);
 		}
 		if(typeof callback == 'function'){
+            if(debugProgressPro) console.log('calling callback function: '+callback);
     		callback();
       	}
-		return(n);
     };
-    $.getScript('http://img.en25.com/i/elqCfg.min.js');
-
+    _elqQ.push(['elqDataLookup', elqDLKey_Email, elqDLLookup]);
 }
-
 (function($) {
 //jquery plugin to change enter to tab for form fields, see http://code.google.com/p/jquerytabtoselect/
     jQuery.fn.enterToTab = function() {
@@ -171,66 +169,60 @@ function popByEmail(myEmail, poparray, elqDLKey_Email, callback) {
         }
     });
 })(jQuery);
-
-function prePop(poparray, elqDLKey_Cookie, elqDLKey_Email, emailField, callback) {
+function prePop(formId, poparray, elqDLKey_Cookie, elqDLKey_Email, emailField, visitorEmailField, callback) {
 //user should call this function. poparray is an array of field ID numbers and corresponding Eloqua database field names
 //prepopulate field values from a user-specified array of Eloqua field names
 //first change default enter submit action to tab for all but the submit button to prevent overwriting data accidentally by pressing enter
-//alert('calling prepop');
-	$('input').not('input[type="submit"]').enterToTab();
-	$('select').enterToTab();
-	$('textarea').enterToTab();
+if(debugProgressPro) console.log('calling prepop');
+	$('#'+formId+' input').not('input[type="submit"]').enterToTab();
+	$('#'+formId+' select').enterToTab();
+	$('#'+formId+' textarea').enterToTab();
 	var n=0;
-	var elqPPS = '50';
 //if the email field is prefilled, use that value for the email address
-	var myEmail = $('[name="'+emailField+'"]').val();
+	var myEmail = $('#'+formId+' [name="'+emailField+'"]').val();
 //set up default personalization function (only populates email)
 	GetElqContentPersonalizationValue = function(fieldName){
 		if (fieldName == emailField){
-			myEmail = $('[name="'+emailField+'"]').val();
+			myEmail = $('#'+formId+' [name="'+emailField+'"]').val();
 			return myEmail;
 		}else{
 			return'';
 		}
 	};
-	//alert('initial email = '+myEmail);
+	if(debugProgressPro) console.log('initial email = '+myEmail);
 	if (myEmail == '') {
-		//alert('no email');
+		if(debugProgressPro) console.log('no email');
 //if there is no email address, try to obtain it using a data lookup based on the visitor's Eloqua tracking cookie
 		if (typeof _elqQ != 'undefined'){
 //set up data lookup variables for cookie-based visitor lookup
-			_elqQ.push(['elqDataLookup', elqDLKey_Cookie, '']);
 			SetElqContent = function() {
-				//alert('calling setElqContent');
+				if(debugProgressPro) console.log('calling setElqContent');
 //set email according to cookie
-  				myEmail = GetElqContentPersonalizationValue('V_Email_Address');
-				n = popByEmail(myEmail, poparray, elqDLKey_Email, callback);
-				return(n);
-  				//alert('after cookie lookup, email = '+myEmail);
+  				myEmail = GetElqContentPersonalizationValue(visitorEmailField);
+				popByEmail(formId, myEmail, poparray, elqDLKey_Email, callback);
+                if(debugProgressPro) console.log('after cookie lookup, email = '+myEmail);
+				return;
 			};
-			//alert('calling elq js');
-	        $.getScript('http://img.en25.com/i/elqCfg.min.js');
-	        //alert('after elq js, myemail='+myEmail);
-			return;
+			if(debugProgressPro) console.log('calling elq js');
+	        _elqQ.push(['elqDataLookup', elqDLKey_Cookie, '']);
 		}
-	}else{
-//prepopulate fields according to email lookup
-		n = popByEmail(myEmail, poparray, elqDLKey_Email, callback);
-		return(n);
 	}
+//prepopulate fields according to email lookup
+	popByEmail(formId, myEmail, poparray, elqDLKey_Email, callback);
+	return;
 }
 
-function skipCondition(skipOption){
+function skipCondition(formId, skipOption){
 // evaluate whether the hide or show condition is true for an advanced skip rule
 
-	var did = '[name="' + skipOption.depends + '"]';
+	var did = '#'+formId+' [name="' + skipOption.depends + '"]';
 	
   if($(did).attr('type') == 'radio') {		
   var radioname = skipOption.depends;
 	switch(skipOption.operator){
 //evaluate the condition according to the specified operator
 	case 'eq':
-		if ($('[name*="'+radioname+'"][type=radio]:checked').val() == skipOption.condition){
+		if ($('#'+formId+' [name*="'+radioname+'"][type=radio]:checked').val() == skipOption.condition){
 			
 			return 1;
 		}else{
@@ -238,7 +230,7 @@ function skipCondition(skipOption){
 		}
 		break;
 	case 'neq':
-		if ($('[name*="'+radioname+'"][type=radio]:checked').val() != skipOption.condition){
+		if ($('#'+formId+' [name*="'+radioname+'"][type=radio]:checked').val() != skipOption.condition){
 			return 1;
 		}else{
 			return 0;
@@ -246,7 +238,7 @@ function skipCondition(skipOption){
 		break;
 	case 'contains':
 		patt = new RegExp(skipOption.condition,'i');
-		if (patt.test($('[name*="'+radioname+'"][type=radio]:checked').val())){
+		if (patt.test($('#'+formId+' [name*="'+radioname+'"][type=radio]:checked').val())){
 			return 1;
 		}else{
 			return 0;
@@ -257,7 +249,7 @@ function skipCondition(skipOption){
 		break;
 	default:
 //if no operator is specified, use the equals operator
-		if ($('[name*="'+radioname+'"][type=radio]:checked').val() == skipOption.condition){
+		if ($('#'+formId+' [name*="'+radioname+'"][type=radio]:checked').val() == skipOption.condition){
 			return 1;
 		}else{
 			return 0;
@@ -307,22 +299,22 @@ function skipCondition(skipOption){
   }
 }
 
-function skipField(fieldname){
+function skipField(formId, fieldname){
 //hide field named fieldname and remove its validation rules
-//alert('skipping field '+fieldname);
-	$('p:has([name="'+fieldname+'"])').hide();
-	$('[name="'+fieldname+'"]').rules('remove');
+if(debugProgressPro) console.log('skipping field '+fieldname);
+	$('#'+formId+' p:has([name="'+fieldname+'"])').hide();
+	$('#'+formId+' [name="'+fieldname+'"]').rules('remove');
 }
 
-function skipIfNotShown(skipOptions, fieldname){
+function skipIfNotShown(formId, sinsskipOptions, fieldname){
 //hide the field unless any "show" condition exists and is true
 	var showThis = 0;
-	for (x in skipOptions){
+	for (x in sinsskipOptions){
 		if (x == fieldname){
-			var ruleset = skipOptions[x];
+			var ruleset = sinsskipOptions[x];
 			for (y in ruleset){
 				if(ruleset[y].action == 'show'){
-					if (skipCondition(ruleset[y])) showThis = 1;
+					if (skipCondition(formId, ruleset[y])) showThis = 1;
 				}
 			}
 		}
@@ -330,89 +322,97 @@ function skipIfNotShown(skipOptions, fieldname){
 	if(showThis){
 		return 0;
 	}else{
-		skipField(fieldname);
+		skipField(formId, fieldname);
 		return 1;
 	}
 }
 
-function skipIfHidden(skipOptions, fieldname){
+function skipIfHidden(formId, sihskipOptions, fieldname){
 //hide this field if it has a "hide" rule, unless there is
 //a "show" rule (show rules take priority)
-//alert('calling skipIfHidden for field '+fieldname);
+if(debugProgressPro) console.log('calling skipIfHidden for field '+fieldname);
 	var hideThis = 0;	
-	for (x in skipOptions){
+	for (x in sihskipOptions){
 		if (x == fieldname){
-			var ruleset = skipOptions[x];
+			var ruleset = sihskipOptions[x];
 			for (y in ruleset){
 				if(ruleset[y].action == 'hide'){
-					if (skipCondition(ruleset[y])) hideThis = 1;
+					if (skipCondition(formId, ruleset[y])) hideThis = 1;
 				}
 			}
 		}
 	}
 	if(hideThis){
-		skipIfNotShown(skipOptions, fieldname);
+		skipIfNotShown(formId, sihskipOptions, fieldname);
 		return 1;
 	}else{
 		return 0;
 	}
 }
 
-function proProgress(formId, nfields, sd, ad, skipOptions, formFields) {
-	//alert('calling proProgress, nfields='+nfields);
+function proProgress(formId, sd, ad, mySkipOptions, formFields) {
+	var newSkipOptions = new Array();
+	$.extend(true, newSkipOptions, mySkipOptions);
+	nfields = formFields.length;
+	if(debugProgressPro) {
+	    console.log('calling proProgress, nfields='+nfields+' sd = '+sd+' ad = '+ad+' Skip options:');
+	    console.dir(mySkipOptions);
+	}
 	var n=0;
 	//first make sure all fields are shown, then hide them.
- 	for(i=0;i<nfields-1;i++){
- 		$('p:has([name="'+formFields[i]+'"])').show();
+ 	for(i in formFields){
+ 		$('#'+formId+' p:has([name="'+formFields[i]+'"])').show();
  	}
+     
+     if(debugProgressPro) console.log('all fields shown: '+formFields);
 //leave ad questions at the top even if answered and count unanswered questions
 	for(i=0;i<ad;i++){
-		if($('[name="'+formFields[i]+'"]').val()=='')n++;
+		if($('#'+formId+' [name="'+formFields[i]+'"]').val()=='')n++;
 	}
-	for(i=ad;i<nfields-1;i++){
+	for(i=ad;i<nfields;i++){
 //for the remaining fields, if the field is prefilled, skip unless "show" condition is true
-		if($('[name="'+formFields[i]+'"]').val()!=''){
-			if(!skipIfNotShown(skipOptions, formFields[i])) n++;
+		if($('#'+formId+' [name="'+formFields[i]+'"]').val()!=''){
+			if(!skipIfNotShown(formId, mySkipOptions, formFields[i])) n++;
 		}else{
 //for up to sd empty fields, only skip the field if a "hide" condition is true
 			if (n < sd){
 				var thisOption = 0;
-				for (x in skipOptions) {
+				for (x in mySkipOptions) {
 					if (x == formFields[i]) {
 						thisOption = 1;
 					}
 				}
 				if(thisOption){
-					if(!skipIfHidden(skipOptions, formFields[i])){
+					if(!skipIfHidden(formId, mySkipOptions, formFields[i])){
 						n++;
 //if this field is changed (the question is answered), show it on subsequent iterations.
 //if an answered field disappears, it is confusing to the visitor, and will make them answer more questions.
-						$('[name="'+formFields[i]+'"]').change(function(){
+						$('#'+formId+' [name="'+formFields[i]+'"]').change(function(){
 							var thisfieldname = $(this).attr('name');
-							skipOptions[thisfieldname] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
+							newSkipOptions[thisfieldname] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
 						});
 					}
 				}else{
 //since this field does not have a skip option, set it to always show on subsequent iterations
 					n++; 
-					skipOptions[formFields[i]] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
+					newSkipOptions[formFields[i]] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
 				}
 			}else{
-				if(!skipIfNotShown(skipOptions, formFields[i])) n++;
+				if(!skipIfNotShown(formId, mySkipOptions, formFields[i])) n++;
 			}
 		}
 	}
-//if the form is completely filled out, auto-submit the form for convenience
-//delete the following three lines to disable
-//alert('number of open fields: '+n);
-//	if (n == 0){ 
-//		$('#'+formId).submit();
-//	}
-//delete previous three lines to disable auto-submit
-	return skipOptions;
+//if the form is completely filled out and progressProAutoSubmit is true, auto-submit the form for convenience
+
+	if(debugProgressPro) console.log('number of open fields: '+n);
+	if (n == 0 && progressProAutoSubmit){ 
+		$('#'+formId).submit();
+	}
+
+	return newSkipOptions;
 }
 
-function progressiveProfile(sd, ad, formId, formFields, popFields, elqDLKey_Cookie, elqDLKey_Email, emailField, validationOptions, skipOptions, nfields) {
+function progressiveProfile(sd, ad, formId, formFields, popFields, elqDLKey_Cookie, elqDLKey_Email, emailField, channelField, validationOptions, skipOptions) {
 //user-called function
 //arguments:
 //		sd: total number of unanswered questions to ask
@@ -429,31 +429,70 @@ function progressiveProfile(sd, ad, formId, formFields, popFields, elqDLKey_Cook
 //				in other words, perform "action" on this field if the field "depends" (equals, does not equal, or contains) the value "condition"
 //				example: {'C_AnyField':{action:'hide',depends:'C_MyField',operator:'neq',condition:'HR'},'C_AnotherField':{action:'hide',depends:'C_MyField',operator'eq',condition:'HR'}}
 //					meaning hide field C_AnyField if field C_MyField is not "HR", and hide field C_AnotherField if field 'C_MyField' is "HR" 
-//		nfields is the number of fields in the form, including the submit button
-	var oldValOptions = new Array();
-//deep copy validation options so they can be reset if necessary
+    if(debugProgressPro) {
+	    console.log('progressiveProfile called, skip options: ');
+		console.dir(skipOptions);
+	}
+
+	oldValOptions = new Array();
+    oldSkipOptions = new Array();
+//deep copy validation and skip options so they can be reset if necessary
 	$.extend(true, oldValOptions, validationOptions);
+	$.extend(true, oldSkipOptions, skipOptions);
 //validate the form using jquery.validate according to validationOptions
-	$('#' + formId).validate(validationOptions);
-//call proProgress to skip fields as specified and set new skip options so that the same fields are shown on subsequent iterations
-	skipOptions = proProgress(formId, nfields, sd, ad, skipOptions,formFields);	
-//if the email changes, re-process the form
-	$('[name="'+emailField+'"]').change(function() {
-//reset the validation options -- some rules may have been removed on previously skipped fields
-		$.extend(true, validationOptions, oldValOptions);
+//if the form is already validated, then add the original rules to each field
+	if(progressProValidator === 0) {
+	    if(debugProgressPro) {
+		    console.log('validating form with validation options: ');
+		    console.dir(validationOptions);
+		}
+	    progressProValidator = $('#' + formId).validate(validationOptions);
+	}else{
+	    for (i in formFields) {
+				var fieldName = formFields[i];
+				for (field in validationOptions.rules){
+					if (field == fieldName){ 
+						$('#'+formId+' [name="'+formFields[i]+'"]').rules('add', validationOptions['rules'][fieldName]);
+						if(debugProgressPro) console.log('added rules: ' + validationOptions['rules'][fieldName] + ' to field '+field);
+					}
+				}
+			}
+	}
+	if(debugProgressPro) {
 			for (i in formFields) {
 				var fieldName = formFields[i];
 				for (field in validationOptions.rules){
 					if (field == fieldName){ 
-						$('[name="'+formFields[i]+'"]').rules('add', validationOptions['rules'][fieldName]);
+					    console.log('field '+field+' has rules:');
+						console.dir($('#'+formId+' [name="'+formFields[i]+'"]').rules());
 					}
 				}
 			}
+	}
+//call proProgress to skip fields as specified and set new skip options so that the same fields are shown on subsequent iterations
+    if(debugProgressPro) console.log('calling proProgress, old skip options:');
+    if(debugProgressPro) console.dir(oldSkipOptions);
+	skipOptions = proProgress(formId, sd, ad, oldSkipOptions,formFields);	
+//if the email changes, re-process the form using the original skip options
+	$('#'+formId+' [name="'+emailField+'"]').change(function() {
+//reset the validation and skip options -- some rules may have been removed on previously skipped fields
+        $.extend(true, skipOptions, oldSkipOptions);
+		$.extend(true, validationOptions, oldValOptions);
+
 // pre-populate the form again
-		prePop(popFields, elqDLKey_Cookie, elqDLKey_Email, emailField, function(){
-//re-process the form, updating the skipOptions again
-			addChannel();
-			skipOptions = proProgress(formId, nfields, sd-1, ad, skipOptions, formFields);
+        popByEmail(formId, $(this).val(), popFields, elqDLKey_Email, function(){
+//re-process the form, updating the skipOptions and validation options again
+			for (i in formFields) {
+				var fieldName = formFields[i];
+				for (field in validationOptions.rules){
+					if (field == fieldName){ 
+						$('#'+formId+' [name="'+formFields[i]+'"]').rules('add', validationOptions['rules'][fieldName]);
+						if(debugProgressPro) console.log('added rules: ' + validationOptions['rules'][fieldName] + ' to field '+field);
+					}
+				}
+			}
+			if (channelField ) addChannel(formId, channelField);
+			skipOptions = proProgress(formId, sd-1, ad, oldSkipOptions, formFields);
 		});		
 	});	
 //if one of the "depends" fields in skipOptions changes, we need to re-process the form according to the new value of the field
@@ -474,16 +513,16 @@ function progressiveProfile(sd, ad, formId, formFields, popFields, elqDLKey_Cook
 	for (i in uniqueDependFields){
 		d = uniqueDependFields[i];
 		
-	  if ($('[name="'+d+'"]').attr('type') == 'radio') {
-
-		$('input[name="'+d+'"]').change(function() {
+	  if ($('#'+formId+' [name="'+d+'"]').attr('type') == 'radio') {
+		$('#'+formId+' input[name="'+d+'"]').change(function() {
 //reset the validation options -- some rules may have been removed on previously skipped fields
 			$.extend(true, validationOptions, oldValOptions);
 			for (i in formFields) {
 				var fieldName = formFields[i];
 				for (field in validationOptions.rules){
 					if (field == fieldName){ 
-						$('[name="'+formFields[i]+'"]').rules('add', validationOptions['rules'][fieldName]);
+						$('#'+formId+' [name="'+formFields[i]+'"]').rules('add', validationOptions['rules'][fieldName]);
+						if(debugProgressPro) console.log('added rules: ' + validationOptions['rules'][fieldName] + ' to field '+field);
 					}
 				}
 			}
@@ -494,34 +533,29 @@ function progressiveProfile(sd, ad, formId, formFields, popFields, elqDLKey_Cook
 			var chNum = $(this).attr('name');
  			skipOptions[chNum] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
 //re-process the form, updating the skipOptions again
-			skipOptions = proProgress(formId, nfields, sd, ad, skipOptions, formFields);		
-		});			
-			
-			
+			skipOptions = proProgress(formId, sd, ad, skipOptions, formFields);		
+		});						
 	  }else{
-		
-		$('[name="'+d+'"]').change(function() {
-			//alert('field changed');
+		$('#'+formId+' [name="'+d+'"]').change(function() {
+			if(debugProgressPro) console.log('field changed');
 //reset the validation options -- some rules may have been removed on previously skipped fields
 			$.extend(true, validationOptions, oldValOptions);
 			for (i in formFields) {
 				var fieldName = formFields[i];
 				for (field in validationOptions.rules){
 					if (field == fieldName){ 
-						$('[name="'+formFields[i]+'"]').rules('add', validationOptions['rules'][fieldName]);
+						$('#'+formId+' [name="'+formFields[i]+'"]').rules('add', validationOptions['rules'][fieldName]);
+						if(debugProgressPro) console.log('added rules: ' + validationOptions['rules'][fieldName] + ' to field '+field);
 					}
 				}
 			}
-			
-			
 //continue to show the "depends" field even if other rules might hide it -- hiding it now would confuse the visitor
 //determine which field just changed:
 			var chNum = $(this).attr('name');
  			skipOptions[chNum] = {1: {action: 'show', depends: '', operator: 'always', condition: ''}};
 //re-process the form, updating the skipOptions again
-			skipOptions = proProgress(formId, nfields, sd, ad, skipOptions, formFields);		
+			skipOptions = proProgress(formId, sd, ad, skipOptions, formFields);		
 		});
 	  }
-	
 	}
 }
